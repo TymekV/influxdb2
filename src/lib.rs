@@ -181,6 +181,25 @@ impl Client {
         ClientBuilder::new(url, org, auth_token).build().unwrap()
     }
 
+    /// Create a new client pointing to the URL specified in
+    /// `protocol://server:port` format and using the specified token for
+    /// authorization.
+    ///
+    /// Unlike `.new()`, returns an error instead of panicking.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let client = influxdb2::Client::new("http://localhost:8888", "org", "my-token");
+    /// ```
+    pub fn try_new(
+        url: impl Into<String>,
+        org: impl Into<String>,
+        auth_token: impl Into<String>,
+    ) -> Result<Self, BuildError> {
+        ClientBuilder::new(url, org, auth_token).build()
+    }
+
     /// Consolidate common request building code
     fn request(&self, method: Method, url: &str) -> reqwest::RequestBuilder {
         let mut req = self.reqwest.request(method, url);
