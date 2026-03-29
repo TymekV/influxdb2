@@ -81,7 +81,7 @@
 //!     let token = std::env::var("INFLUXDB_TOKEN").unwrap();
 //!     let bucket = "bucket";
 //!     let client = Client::new(host, org, token);
-//!     
+//!
 //!     let points = vec![
 //!         DataPoint::builder("cpu")
 //!             .tag("host", "server01")
@@ -93,9 +93,9 @@
 //!             .field("usage", 0.87)
 //!             .build()?,
 //!     ];
-//!                                                             
+//!
 //!     client.write(bucket, stream::iter(points)).await?;
-//!     
+//!
 //!     Ok(())
 //! }
 //! ```
@@ -209,12 +209,22 @@ pub enum BuildError {
         /// Reqwest internal error
         source: reqwest::Error,
     },
+
+    /// Invalid base URL was provided
+    #[snafu(display("Invalid url was provided: {url}"))]
+    InvalidUrlError {
+        /// Provided URL
+        url: String,
+
+        /// URL internal error
+        source: url::ParseError,
+    },
 }
 /// ClientBuilder builds the `Client`
 #[derive(Debug)]
 pub struct ClientBuilder {
     /// The base URL this client sends requests to
-    pub base: Url,
+    pub base: String,
     /// The organization tied to this client
     pub org: String,
     auth_header: Option<Secret<String>>,
@@ -250,11 +260,9 @@ impl ClientBuilder {
         };
 
         let url: String = url.into();
-        let base =
-            Url::parse(&url).unwrap_or_else(|_| panic!("Invalid url was provided: {}", &url));
 
         Self {
-            base,
+            base: url,
             org: org.into(),
             auth_header,
             reqwest: builder,
@@ -273,8 +281,13 @@ impl ClientBuilder {
 
     /// Build returns the influx client
     pub fn build(self) -> Result<Client, BuildError> {
+        let base = Url::parse(&self.base).map_err(|e| BuildError::InvalidUrlError {
+            url: self.base.clone(),
+            source: e,
+        })?;
+
         Ok(Client {
-            base: self.base,
+            base,
             org: self.org,
             auth_header: self.auth_header,
             reqwest: self.reqwest.build().context(ReqwestClientError)?,
