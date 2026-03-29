@@ -190,7 +190,7 @@ impl Client {
     /// # Example
     ///
     /// ```
-    /// let client = influxdb2::Client::new("http://localhost:8888", "org", "my-token");
+    /// let client = influxdb2::Client::try_new("http://localhost:8888", "org", "my-token").unwrap();
     /// ```
     pub fn try_new(
         url: impl Into<String>,
