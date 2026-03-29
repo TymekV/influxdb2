@@ -278,7 +278,7 @@ impl ClientBuilder {
             Some(format!("Token {}", token).into())
         };
 
-        let url: String = url.into();
+        let url = url.into();
 
         Self {
             base: url,
